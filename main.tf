@@ -7,10 +7,9 @@ provider "aws" {
 }
 variable "vpc_cidr_blocks" {}
 variable "subnet_cidr_blocks" {}
-
 variable "avail_zone" {}
-
 variable "env_prefix" {}
+variable "my_ip" {}
 
 resource "aws_vpc" "myapp-vpc" {
   cidr_block = var.vpc_cidr_blocks
@@ -35,7 +34,7 @@ resource "aws_subnet" "myapp-subnet-1" {
 resource "aws_internet_gateway" "myapp-igw" {
   vpc_id = aws_vpc.myapp-vpc.id
   tags = {
-    Name = "${var.env_prefix} internet gateway"
+    Name = "${var.env_prefix}-internet-gateway"
   }
 }
 
@@ -48,11 +47,42 @@ resource "aws_route_table" "myapp-route-table" {
   }
 
   tags = {
-    Name = "${var.env_prefix} route table"
+    Name = "${var.env_prefix}-route-table"
   }
 }
 
 resource "aws_route_table_association" "route-table-association-subnet" {
   subnet_id = aws_subnet.myapp-subnet-1.id
   route_table_id = aws_route_table.myapp-route-table.id
+}
+
+resource "aws_security_group" "myapp-security-group" {
+  name = "myapp-security-group"
+  vpc_id = aws_vpc.myapp-vpc.id
+
+  ingress {
+      cidr_blocks = [ var.my_ip ]
+      from_port = 22
+      protocol = "tcp"
+      to_port = 22
+    }
+  ingress {
+      cidr_blocks = [ "0.0.0.0/0" ]
+      from_port = 8080
+      protocol = "tcp"
+      to_port = 8080
+    }
+
+  egress {
+    cidr_blocks = [ "0.0.0.0/0" ]
+    from_port = 0
+    prefix_list_ids = []
+    protocol = "-1"
+    to_port = 0
+  } 
+
+  tags = {
+    Name = "${var.env_prefix}-security-group"
+  }
+  
 }
