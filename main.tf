@@ -2,8 +2,8 @@ provider "aws" {
   region = "us-east-1"
   # never put sensitive data in the configuration file
   # refer to the readme file on how to use it
-  #access_key = "AKIAQKXWVPUTOANFBR6S"
-  #secret_key = "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"
+  #access_key = ""
+  #secret_key = ""
 }
 variable "vpc_cidr_blocks" {}
 variable "subnet_cidr_blocks" {}
