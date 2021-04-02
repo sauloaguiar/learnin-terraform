@@ -3,14 +3,15 @@ provider "aws" {
   # never put sensitive data in the configuration file
   # refer to the readme file on how to use it
   #access_key = ""
-  #secret_key = ""
 }
+  #secret_key = ""
 variable "vpc_cidr_blocks" {}
 variable "subnet_cidr_blocks" {}
 variable "avail_zone" {}
 variable "env_prefix" {}
 variable "my_ip" {}
 variable "instance_type" {}
+variable "public_key_location" {}
 
 resource "aws_vpc" "myapp-vpc" {
   cidr_block = var.vpc_cidr_blocks
@@ -101,6 +102,22 @@ data "aws_ami" "latest-amazon-linux-image" {
   }
 }
 
+output "aws_ami_id" {
+  value = data.aws_ami.latest-amazon-linux-image.id
+}
+
+output "ec2_public_ip" {
+  value = data.aws_instance.myapp-server.public_ip
+}
+resource "aws_key_pair" "ssh-key" {
+  key_name = "server-key"
+
+  # read from a local public key file
+  # use `ssh -i <path_to_private_key_locally> ec2-user@<public-ip>
+  # -i <path_to_private_key_locally> is actually the default, so `ssh ec2-user@ip` will do it
+  public_key = file(var.public_key_location)
+}
+
 resource "aws_instance" "myapp-server" {
   # instance configuration (required fields)
   ami = data.aws_ami.latest-amazon-linux-image.id
@@ -111,6 +128,11 @@ resource "aws_instance" "myapp-server" {
   vpc_security_group_ids = [ aws_default_security_group.default-sg.id ]
   availability_zone = var.avail_zone
 
-  # 
+  # enable this to be access from public
   associate_public_ip_address = true
+
+  key_name = aws_key_pair.ssh-key.key_name
+  tags = {
+    "name" = "${var.env_prefix}-server"
+  }
 }
