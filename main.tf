@@ -2,9 +2,8 @@ provider "aws" {
   region = "us-east-1"
   # never put sensitive data in the configuration file
   # refer to the readme file on how to use it
-  #access_key = ""
 }
-  #secret_key = ""
+
 variable "vpc_cidr_blocks" {}
 variable "subnet_cidr_blocks" {}
 variable "avail_zone" {}
@@ -58,8 +57,7 @@ resource "aws_route_table_association" "route-table-association-subnet" {
   route_table_id = aws_route_table.myapp-route-table.id
 }
 
-resource "aws_security_group" "myapp-security-group" {
-  name = "myapp-security-group"
+resource "aws_default_security_group" "default-sg" {
   vpc_id = aws_vpc.myapp-vpc.id
 
   ingress {
@@ -84,7 +82,7 @@ resource "aws_security_group" "myapp-security-group" {
   } 
 
   tags = {
-    Name = "${var.env_prefix}-security-group"
+    Name = "${var.env_prefix}-default-sg"
   }
   
 }
@@ -107,7 +105,7 @@ output "aws_ami_id" {
 }
 
 output "ec2_public_ip" {
-  value = data.aws_instance.myapp-server.public_ip
+  value = aws_instance.myapp-server.public_ip
 }
 resource "aws_key_pair" "ssh-key" {
   key_name = "server-key"
@@ -132,6 +130,26 @@ resource "aws_instance" "myapp-server" {
   associate_public_ip_address = true
 
   key_name = aws_key_pair.ssh-key.key_name
+
+  # this will be executed in the ec2 instance once it's up and running
+  # we're passing data to aws ec2
+  user_data = file("entry-script.sh")
+
+  # provisioner "file" {
+  #   source = "entry-script.sh"
+  #   destination = "/home/ec2-user/entry-script-on-ec2.sh"
+  # }
+
+  # provisioner "remote-exec" {
+  #   # this will execute in the remote ec2 instance that just got created
+  #   # notice that the file got copied to the remote ec2 instance in the provisioner above
+  #   script = file("entry-script-on-ec2.sh")
+  # }
+  
+  # provisioner "local-exec" {
+  #   # this will execute in the machine that execute terraform
+  #   command = "echo ${self.public_ip} > output.txt"
+  # }
   tags = {
     "name" = "${var.env_prefix}-server"
   }
