@@ -1,5 +1,6 @@
-resource "aws_default_security_group" "default-sg" {
+resource "aws_security_group" "myapp-sg" {
   vpc_id = var.vpc_id
+  name = "myapp-sg"
 
   ingress {
       cidr_blocks = [ var.my_ip ]
@@ -58,7 +59,7 @@ resource "aws_instance" "myapp-server" {
 
   # reading subnet value from our own module
   subnet_id = var.subnet_id
-  vpc_security_group_ids = [ aws_default_security_group.default-sg.id ]
+  vpc_security_group_ids = [ aws_security_group.myapp-sg.id ]
   availability_zone = var.avail_zone
 
   # enable this to be access from public
