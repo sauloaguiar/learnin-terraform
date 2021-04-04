@@ -1,3 +1,12 @@
+# terraform {
+#   required_version = ">= 0.12"
+#   backend {
+#     bucket = "myapp-bucket"
+#     key = "myapp/state.tfstate"  # how can we can key this per environment?
+#     region = "us-east-1a"
+#   }
+# }
+
 provider "aws" {
   region = "us-east-1"
   # never put sensitive data in the configuration file
